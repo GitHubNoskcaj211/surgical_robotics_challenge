@@ -132,9 +132,9 @@ if __name__ == "__main__":
             print('LOADING CONTROLLER FOR ', arm_name)
             # Initial Target Offset for PSM1
             # init_xyz = [0.1, -0.85, -0.15]
-            init_xyz = [0, 0, -1.0]
+            init_xyz = [-.5, -.7, -2.56]
             init_rpy = [3.14, 0, 1.57079]
-            gui = ObjectGUI(arm_name + '/baselink', init_xyz, init_rpy, 3.0, 10.0, 0.000001)
+            gui = ObjectGUI(arm_name + '/baselink', init_xyz, init_rpy, 3.0, 20.0, 0.000001)
             controller = PSMController(gui, psm)
             controllers.append(controller)
 
@@ -144,9 +144,9 @@ if __name__ == "__main__":
         if psm.base is not None:
             print('LOADING CONTROLLER FOR ', arm_name)
             # Initial Target Offset for PSM2
-            init_xyz = [0, 0.0, -1.0]
+            init_xyz = [.5, -.7, -2.56]
             init_rpy = [3.14, 0, 1.57079]
-            gui = ObjectGUI(arm_name + '/baselink', init_xyz, init_rpy, 3.0, 12, 0.000001)
+            gui = ObjectGUI(arm_name + '/baselink', init_xyz, init_rpy, 3.0, 20.0, 0.000001)
             controller = PSMController(gui, psm)
             controllers.append(controller)
 
@@ -156,7 +156,7 @@ if __name__ == "__main__":
         if psm.base is not None:
             print('LOADING CONTROLLER FOR ', arm_name)
             # Initial Target Offset for PSM2
-            init_xyz = [0, 0.0, -1.0]
+            init_xyz = [-.5, -.7, -2.56]
             init_rpy = [3.14, 0, 1.57079]
             gui = ObjectGUI(arm_name + '/baselink', init_xyz, init_rpy, 3.0, 3.14, 0.000001)
             controller = PSMController(gui, psm)

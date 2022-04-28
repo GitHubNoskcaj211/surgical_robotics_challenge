@@ -42,34 +42,55 @@ def get_arm_waypoint(other_frame_waypoint, arm_to_other_frame):
 
 class GetPaths():
     def __init__(self, arm_frame_id):
-        self.world_to_needle = None
+        self.average = np.full((100,4,4), None, dtype=np.float32)
+
+        self.needle = None
         rospy.Subscriber('/CRTK/Needle/measured_cp', TransformStamped, self.set_needle_position, queue_size=1)
 
-        self.needle_to_needle_grab_right = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])
+        self.base = None
+        rospy.Subscriber('/CRTK/' + arm_frame_id + '/T_w_t_b', TransformStamped, self.set_base_position, queue_size=1)
+
+        self.needle_to_needle_grab_right = np.array([[-3.5784909e-01,  9.3377423e-01,  3.3670664e-03,  9.2655444e-01],
+                                                     [ 9.2014331e-01,  3.5323501e-01, -1.6899803e-01, -1.1542608e+00],
+                                                     [-1.5899545e-01, -5.7377659e-02, -9.8561090e-01, -3.5336194e+00],
+                                                     [ 0.0000000e+00,  0.0000000e+00,  0.0000000e+00,  1.0000000e+00]])
+
         self.needle_to_needle_tip = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])
         self.needle_to_needle_grab_left = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]])
 
-        self.world_to_arm = None
+        self.end_effector = None
         rospy.Subscriber('/CRTK/' + arm_frame_id + '/measured_cp', TransformStamped, self.set_arm_position, queue_size=1)
 
-        self.world_to_entrys = None
+        self.world_to_entrys = [None] * 4
         rospy.Subscriber('/CRTK/Entry1/measured_cp', TransformStamped, self.set_entry1, queue_size=1)
         rospy.Subscriber('/CRTK/Entry2/measured_cp', TransformStamped, self.set_entry2, queue_size=1)
         rospy.Subscriber('/CRTK/Entry3/measured_cp', TransformStamped, self.set_entry3, queue_size=1)
         rospy.Subscriber('/CRTK/Entry4/measured_cp', TransformStamped, self.set_entry4, queue_size=1)
 
-        self.world_to_exits = None
+        self.world_to_exits = [None] * 4
         rospy.Subscriber('/CRTK/Exit1/measured_cp', TransformStamped, self.set_exit1, queue_size=1)
         rospy.Subscriber('/CRTK/Exit2/measured_cp', TransformStamped, self.set_exit2, queue_size=1)
         rospy.Subscriber('/CRTK/Exit3/measured_cp', TransformStamped, self.set_exit3, queue_size=1)
         rospy.Subscriber('/CRTK/Exit4/measured_cp', TransformStamped, self.set_exit4, queue_size=1)
 
     def set_needle_position(self, msg):
-        self.world_to_needle = self.matrix_from_transform(msg)
+        self.needle = self.matrix_from_transform(msg)
+
+    def set_base_position(self, msg):
+        self.base = self.matrix_from_transform(msg)
 
     def set_arm_position(self, msg):
-        # TODO convert the frame to get the arm in the world frame
-        self.world_to_arm = self.matrix_from_transform(msg)
+        if type(self.base) is np.ndarray:
+            base_to_end_effector = self.matrix_from_transform(msg)
+            self.end_effector = np.matmul(self.base, base_to_end_effector)
+        # if type(self.needle) is np.ndarray and type(self.end_effector) is np.ndarray:
+        #     print('needle to end effector')
+        #     print(np.matmul(np.linalg.inv(self.needle), self.end_effector))
+        #     self.average[1:100] = self.average[0:99]
+        #     self.average[0] = np.matmul(np.linalg.inv(self.needle), self.end_effector)
+        #     print('average')
+        #     print(np.average(self.average, axis=0))
+
 
     def set_entry1(self, msg):
         self.world_to_entrys[0] = self.matrix_from_transform(msg)
@@ -98,9 +119,12 @@ class GetPaths():
     # path to grab the needle with the right arm
     def grab_needle_right(self):
         if type(self.needle) is np.ndarray:
-            needle_grab = np.matmul(np.linalg.inv(self.needle_to_needle_grab_right), self.world_to_needle)
-            needle_intermediate_to_needle = np.array([[1,0,0,0],[0,1,0,0],[0,0,1,-1],[0,0,0,1]])
-            needle_intermediate = np.matmul(needle_intermediate_to_needle, self.world_to_needle)
+            needle_grab = np.matmul(self.needle, self.needle_to_needle_grab_right)
+            needle_to_needle_intermediate = np.array([[-3.5775161e-01, 9.3381143e-01, 3.0414544e-03, 9.2356735e-01],
+                                                     [ 9.2022789e-01,  3.5309720e-01, -1.6882646e-01, -1.1536529e+00],
+                                                     [-1.5872622e-01, -5.7599988e-02, -9.8564047e-01, -3.4219909e+00],
+                                                     [ 0.0000000e+00,  0.0000000e+00,  0.0000000e+00,  1.0000000e+00]])
+            needle_intermediate = np.matmul(self.needle, needle_to_needle_intermediate)
             path = [needle_intermediate, needle_grab]
             return path
         else:
@@ -142,5 +166,5 @@ class GetPaths():
 
 if __name__ == '__main__':
     rospy.init_node("get_waypoints_nodes")
-    get_paths_node = GetPaths('psm1')
+    get_paths_node = GetPaths('psm2')
     rospy.spin()

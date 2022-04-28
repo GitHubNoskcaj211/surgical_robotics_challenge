@@ -47,6 +47,7 @@ from PyKDL import Frame, Rotation, Vector
 import time
 from surgical_robotics_challenge.utils.joint_pos_recorder import JointPosRecorder
 from surgical_robotics_challenge.utils.joint_errors_model import JointErrorsModel
+import numpy as np
 
 jpRecorder = JointPosRecorder()
 
@@ -69,9 +70,63 @@ class PSMJointMapping:
 
 pjm = PSMJointMapping()
 
+def frame_to_mat(frame):
+    mat = np.empty((4,4), dtype=np.float32)
+
+
+def mat_to_frame(mat):
+    frame = Frame()
+    frame.p = Vector(mat[0,3],
+                     mat[1,3],
+                     mat[2,3])
+    Quat = rot_mat_to_quat(mat[0:3,0:3])
+    frame.M = Rotation.Quaternion(Quat[0],
+                                  Quat[1],
+                                  Quat[2],
+                                  Quat[3])
+    return frame
+
+def rot_mat_to_quat(cp):
+    R = Rotation(cp[0, 0], cp[0, 1], cp[0, 2],
+                 cp[1, 0], cp[1, 1], cp[1, 2],
+                 cp[2, 0], cp[2, 1], cp[2, 2])
+
+    return R.GetQuaternion()
+
+def np_mat_to_transform(cp):
+    trans = Transform()
+    trans.translation.x = cp[0, 3]
+    trans.translation.y = cp[1, 3]
+    trans.translation.z = cp[2, 3]
+
+    Quat = rot_mat_to_quat(cp)
+
+    trans.rotation.x = Quat[0]
+    trans.rotation.y = Quat[1]
+    trans.rotation.z = Quat[2]
+    trans.rotation.w = Quat[3]
+    return trans
+
+def quaternion_to_rotation_matrix(Q):
+    r = Rotation.from_quat([Q.x, Q.y, Q.z, Q.w])
+    return r.as_dcm()
+
+def matrix_from_transform(transform):
+    rotation_matrix = quaternion_to_rotation_matrix(transform.transform.rotation)
+    full_matrix = np.append(
+        rotation_matrix,
+        [
+            [transform.transform.translation.x],
+            [transform.transform.translation.y],
+            [transform.transform.translation.z],
+        ],
+        axis=1,
+    )
+    full_matrix = np.append(full_matrix, [[0, 0, 0, 1]], axis=0)
+    return full_matrix
 
 class PSM:
-    def __init__(self, client, name, add_joint_errors=True, save_jp=False):
+    def __init__(self, client, name, add_joint_errors=False, save_jp=False):
         self.save_jp = save_jp
         self.client = client
         self.name = name
@@ -87,6 +142,7 @@ class PSM:
         self.graspable_objs_prefix = ["Needle", "Thread", "Puzzle"]
 
         self.T_t_b_home = Frame(Rotation.RPY(3.14, 0.0, 1.57079), Vector(0.0, 0.0, -1.0))
+        self.T_b_funk = Frame(Rotation.Quaternion(0.7071068, 0, 0, 0.7071068), Vector(0.0,0.0,0.0))
 
         # Transform of Base in World
         self._T_b_w = None
@@ -154,11 +210,15 @@ class PSM:
                     self.grasped[i] = False
                     # print('Releasing Actuator ', i)
 
-    def servo_cp(self, T_t_b):
-        if type(T_t_b) in [np.matrix, np.array]:
-            T_t_b = convert_mat_to_frame(T_t_b)
+    def servo_cp(self, T_req):
+        T_t_f = self.get_T_b_w() * T_req
+        # T_t_f = T_req
+        print(T_t_f)
 
-        ik_solution = compute_IK(T_t_b)
+        if type(T_t_f) in [np.matrix, np.array]:
+            T_t_f = convert_mat_to_frame(T_t_f)
+
+        ik_solution = compute_IK(T_t_f)
         self._ik_solution = enforce_limits(ik_solution)
         self.servo_jp(self._ik_solution)
 

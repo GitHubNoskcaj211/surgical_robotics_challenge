@@ -103,7 +103,7 @@ class PSMCRTKWrapper:
     def __init__(self, client, name, namespace):
         self.arm_name = name
         self.namespace = namespace
-        self.arm = psm_arm.PSM(client, name, add_joint_errors=True)
+        self.arm = psm_arm.PSM(client, name, add_joint_errors=False)
         time.sleep(0.1)
 
         self.measured_js_pub = rospy.Publisher(namespace + '/' + name + '/' + 'measured_js', JointState,
@@ -126,6 +126,14 @@ class PSMCRTKWrapper:
 
         self.servo_jaw_jp_sub = rospy.Subscriber(namespace + '/' + name + '/jaw/' + 'servo_jp', JointState,
                                                  self.servo_jaw_jp_cb, queue_size=1)
+
+        self.T_b_t_w = rospy.Publisher(namespace + '/' + name + '/' + 'T_b_t_w', TransformStamped,
+                                               queue_size=1)
+        self.T_b_t_w_msg = TransformStamped()
+
+        self.T_w_t_b = rospy.Publisher(namespace + '/' + name + '/' + 'T_w_t_b', TransformStamped,
+                                               queue_size=1)
+        self.T_w_t_b_msg = TransformStamped()
 
         self._measured_js_msg = JointState()
         self._measured_js_msg.name = self.arm.get_joint_names()
@@ -160,9 +168,16 @@ class PSMCRTKWrapper:
         self._measured_cp_msg.transform = np_mat_to_transform(self.arm.measured_cp())
         self.measured_cp_pub.publish(self._measured_cp_msg)
 
+    def publish_T(self):
+        self.T_b_t_w_msg.transform = np_mat_to_transform(self.arm.get_T_b_w())
+        self.T_w_t_b_msg.transform = np_mat_to_transform(self.arm.get_T_w_b())
+        self.T_b_t_w.publish(self.T_b_t_w_msg)
+        self.T_w_t_b.publish(self.T_w_t_b_msg)
+
     def run(self):
         self.publish_js()
         self.publish_cs()
+        self.publish_T()
 
 
 class ECMCRTKWrapper:
@@ -374,7 +389,3 @@ if __name__ == "__main__":
 
     sceneManager = SceneManager(options)
     sceneManager.run()
-
-
-
-
