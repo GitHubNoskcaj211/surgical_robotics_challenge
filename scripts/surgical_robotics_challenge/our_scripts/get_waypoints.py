@@ -83,6 +83,7 @@ class GetPaths():
         if type(self.base) is np.ndarray:
             base_to_end_effector = self.matrix_from_transform(msg)
             self.end_effector = np.matmul(self.base, base_to_end_effector)
+            
         # if type(self.needle) is np.ndarray and type(self.end_effector) is np.ndarray:
         #     print('needle to end effector')
         #     print(np.matmul(np.linalg.inv(self.needle), self.end_effector))
