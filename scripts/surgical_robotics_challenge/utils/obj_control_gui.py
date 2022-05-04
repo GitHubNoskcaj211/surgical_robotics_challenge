@@ -273,7 +273,7 @@ class ObjectGUI:
                                orient=HORIZONTAL,
                                command=self.gr_cb)
         self.gr_slider.grid(row=row_count, column=1)
-        self.gr_slider.set(0.5)
+        self.gr_slider.set(0.0)
 
         row_count = row_count + 1
 

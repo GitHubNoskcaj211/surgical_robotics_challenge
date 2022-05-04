@@ -54,6 +54,7 @@ from surgical_robotics_challenge.utils.jnt_control_gui import JointGUI
 from surgical_robotics_challenge.ecm_arm import ECM
 from surgical_robotics_challenge.utils.utilities import get_boolean_from_opt
 
+
 class PSMController:
     def __init__(self, gui_handle, arm):
         self.counter = 0

@@ -211,9 +211,7 @@ class PSM:
                     # print('Releasing Actuator ', i)
 
     def servo_cp(self, T_req):
-        T_t_f = self.get_T_b_w() * T_req
-        # T_t_f = T_req
-        print(T_t_f)
+        T_t_f = self.get_T_w_b() * T_req
 
         if type(T_t_f) in [np.matrix, np.array]:
             T_t_f = convert_mat_to_frame(T_t_f)
