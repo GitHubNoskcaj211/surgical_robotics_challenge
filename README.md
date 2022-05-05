@@ -16,6 +16,13 @@ cd <surgical_robotics_challenge>/scripts/surgical_robotics_challenge/our_scripts
 python main.py
 ```
 
+The files changed for functionality of the final design were (all in scripts/surgical_robotics_challenge):
+- our_scripts/main.py
+- our_scripts/get_waypoints.py
+- launch_crtk_interface.py
+- psm_arm.py
+
+
 # Surgical Robotics Challenge
 For more information regarding the challenge, please visit https://collaborative-robotics.github.io/surgical-robotics-challenge/challenge-2021.html
 
