@@ -1,3 +1,21 @@
+# HELLO!
+If you are here to run the code and grade the project here is our commands to run everything (run each in a different terminal):
+```
+roscore
+```
+```
+cd <ambf>/bin/lin-x86_64
+./ambf_simulator --launch_file <surgical_robotics_challenge>/launch.yaml -l 0,1,3,4,14,15 -p 120 -t 1 --override_max_comm_freq 20 -s 0.25
+```
+```
+cd <surgical_robotics_challenge>/scripts/surgical_robotics_challenge
+python launch_crtk_interface.py --ecm False
+```
+```
+cd <surgical_robotics_challenge>/scripts/surgical_robotics_challenge/our_scripts
+python main.py
+```
+
 # Surgical Robotics Challenge
 For more information regarding the challenge, please visit https://collaborative-robotics.github.io/surgical-robotics-challenge/challenge-2021.html
 

@@ -187,7 +187,7 @@ class GetPaths():
                                                                     [0, 1, 0, 0],
                                                                     [0, 0, 1, 0],
                                                                     [0, 0, 0, 1]]))
-            for angle in np.linspace(start_angle, end_angle, 10):
+            for angle in np.linspace(start_angle, end_angle, 25):
                 needle_intermediate = np.matmul(self.needle, np.array([[math.cos(angle),0,-math.sin(angle),math.sin(angle)/10.0],[-math.sin(angle),0,-math.cos(angle),math.cos(angle) / 10.0],[0,1,0,0],[0,0,0,1]]))
                 needle_intermediate_to_end_effector = np.matmul(np.linalg.inv(needle_intermediate), self.end_effector)
 
@@ -226,7 +226,7 @@ class GetPaths():
                                                                     [0, 1, 0, 0],
                                                                     [0, 0, 1, 0],
                                                                     [0, 0, 0, 1]]))
-            for angle in np.linspace(start_angle, end_angle, 10):
+            for angle in np.linspace(start_angle, end_angle, 25):
                 needle_intermediate = np.matmul(self.needle, np.array([[math.cos(angle),0,-math.sin(angle),math.sin(angle)/10.0],[-math.sin(angle),0,-math.cos(angle),math.cos(angle) / 10.0],[0,1,0,0],[0,0,0,1]]))
                 needle_intermediate_to_end_effector = np.matmul(np.linalg.inv(needle_intermediate), self.end_effector)
 
