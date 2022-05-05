@@ -160,7 +160,7 @@ class GetPaths():
             return None
 
     # path for the arm to go through the hole and poke the needle to the other side
-    def exit_path(self, index):
+    def exit_path_right(self, index):
         if type(self.needle) is np.ndarray and type(self.end_effector) is np.ndarray:
             path = []
             start_angle = math.pi / 3.0
@@ -199,31 +199,52 @@ class GetPaths():
             return None
 
     # path for the arm to go through the hole and poke the needle to the other side
-    def exit_path_new(self, index):
+    def exit_path_left(self, index):
         if type(self.needle) is np.ndarray and type(self.end_effector) is np.ndarray:
             path = []
-            start_angle = math.pi / 6.0
-            end_angle = -math.pi / 3.0
-            for angle in np.linspace(start_angle, end_angle, 24):
-                needle_intermediate1 = np.matmul(self.needle, np.array([[math.cos(angle),0,-math.sin(angle),math.sin(angle)/10.0],[-math.sin(angle),0,-math.cos(angle),math.cos(angle) / 10.0],[0,1,0,0],[0,0,0,1]]))
-                needle_intermediate1_to_end_effector = np.matmul(np.linalg.inv(needle_intermediate1), self.end_effector)
-                angle = math.pi / 2.0 + angle
-                needle_intermediate2 = np.matmul(self.needle, np.array([[math.cos(angle),0,-math.sin(angle),math.sin(angle)/10.0],[-math.sin(angle),0,-math.cos(angle),math.cos(angle) / 10.0],[0,1,0,0],[0,0,0,1]]))
-                needle_intermediate2_to_end_effector = np.matmul(np.linalg.inv(needle_intermediate2), self.end_effector)
+            start_angle = -math.pi / 6.0
+            end_angle = -math.pi * 2.0 / 3.0
+            diff = self.world_to_exits[index][0:3,3] - self.world_to_entrys[index][0:3,3]
+            d = math.sqrt(np.dot(diff,diff))
 
-                entry = np.matmul(self.world_to_entrys[index], np.array([[0, 0, 1, 0.0],
-                                                                         [0, 1, 0, 0],
-                                                                         [-1, 0, 0, 0],
-                                                                         [0, 0, 0, 1]]))
+            entry = np.matmul(self.world_to_entrys[index], np.array([[0, 0, 1, 0.0],
+                                                                     [0, 1, 0, 0],
+                                                                     [-1, 0, 0, 0],
+                                                                     [0, 0, 0, 1]]))
 
-                exit = np.matmul(self.world_to_exits[index], np.array([[0, 0, -1, 0.0],
-                                                                         [0, 1, 0, 0],
-                                                                         [1, 0, 0, 0],
-                                                                         [0, 0, 0, 1]]))
+            exit = np.matmul(self.world_to_exits[index], np.array([[0, 0, -1, 0.0],
+                                                                     [0, 1, 0, 0],
+                                                                     [1, 0, 0, 0],
+                                                                     [0, 0, 0, 1]]))
 
-                spot1 = np.matmul(entry, needle_intermediate1_to_end_effector)
-                spot2 = np.matmul(exit, needle_intermediate2_to_end_effector)
-                path.append(spot1 * 0.5 + spot2 * 0.5)
+            phantom_middle = np.matmul(np.matmul(entry,
+                                                                     np.array([[.707, 0, -.707, 0.0],
+                                                                     [0, 1, 0, 0],
+                                                                     [.707, 0, .707, 0],
+                                                                     [0, 0, 0, 1]])),
+                                                                     np.array([[1, 0, 0, d / 2.0],
+                                                                    [0, 1, 0, 0],
+                                                                    [0, 0, 1, 0],
+                                                                    [0, 0, 0, 1]]))
+            for angle in np.linspace(start_angle, end_angle, 10):
+                needle_intermediate = np.matmul(self.needle, np.array([[math.cos(angle),0,-math.sin(angle),math.sin(angle)/10.0],[-math.sin(angle),0,-math.cos(angle),math.cos(angle) / 10.0],[0,1,0,0],[0,0,0,1]]))
+                needle_intermediate_to_end_effector = np.matmul(np.linalg.inv(needle_intermediate), self.end_effector)
+
+
+
+                path.append(np.matmul(phantom_middle, needle_intermediate_to_end_effector))
+
+            angle = -math.pi / 2.0
+            needle_end = np.matmul(self.needle, np.array([[math.cos(angle),0,-math.sin(angle),math.sin(angle)/10.0],[-math.sin(angle),0,-math.cos(angle),math.cos(angle) / 10.0],[0,1,0,0],[0,0,0,1]]))
+            needle_end_to_end_effector = np.matmul(np.linalg.inv(needle_end), self.end_effector)
+            path.append(np.matmul(np.matmul(exit, np.array([[1, 0, 0, 0.2],
+                                                   [0, 1, 0, 0],
+                                                   [0, 0, 1, 0],
+                                                   [0, 0, 0, 1]])), needle_end_to_end_effector))
+            path.append(np.matmul(np.matmul(exit, np.array([[.707, 0, .707, 0.2],
+                                                   [0, 1, 0, 0],
+                                                   [-.707, 0, .707, 0],
+                                                   [0, 0, 0, 1]])), needle_end_to_end_effector))
             return path
         else:
             return None
