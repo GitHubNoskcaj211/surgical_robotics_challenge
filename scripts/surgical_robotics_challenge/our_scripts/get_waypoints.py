@@ -164,7 +164,7 @@ class GetPaths():
         if type(self.needle) is np.ndarray and type(self.end_effector) is np.ndarray:
             path = []
             start_angle = math.pi / 3.0
-            end_angle = 0
+            end_angle = -math.pi / 6.0
             diff = self.world_to_exits[index][0:3,3] - self.world_to_entrys[index][0:3,3]
             d = math.sqrt(np.dot(diff,diff))
 
