@@ -1,16 +1,26 @@
 # HELLO!
 If you are here to run the code and grade the project here is our commands to run everything (run each in a different terminal):
+
+Terminal 1: Initialize ROS
 ```
 roscore
 ```
+
+Terminal 2: Initialize da Vinci AMBF simulation (Press 2 to disable gravity and joint errors should be disabled by default)
+Note: that it currently works based on the January commit
+https://github.com/WPI-AIM/ambf/commit/c654ff49a7051549ccc1568a8ceae12505c9117a
 ```
 cd <ambf>/bin/lin-x86_64
 ./ambf_simulator --launch_file <surgical_robotics_challenge>/launch.yaml -l 0,1,3,4,14,15 -p 120 -t 1 --override_max_comm_freq 20 -s 0.25
 ```
+
+Terminal 3: Initialize CRTK-ROS Interface 
 ```
 cd <surgical_robotics_challenge>/scripts/surgical_robotics_challenge
 python launch_crtk_interface.py --ecm False
 ```
+
+Terminal: Launch the suturing script
 ```
 cd <surgical_robotics_challenge>/scripts/surgical_robotics_challenge/our_scripts
 python main.py
