@@ -13,14 +13,19 @@ import time
 
 rospy.init_node("main")
 get_paths_right = GetPaths('psm2')
+get_paths_left = GetPaths('psm1')
 
 def set_needle_position(msg):
     global needle
     needle = matrix_from_transform(msg)
 
-def set_base_position(msg):
-    global base
-    base = matrix_from_transform(msg)
+def set_base_position_right(msg):
+    global base_right
+    base_right = matrix_from_transform(msg)
+
+def set_base_position_left(msg):
+    global base_left
+    base_left = matrix_from_transform(msg)
 
 def quaternion_to_rotation_matrix(Q):
     r = Rotation2.from_quat([Q.x, Q.y, Q.z, Q.w])
@@ -61,11 +66,17 @@ def rot_mat_to_quat(cp):
 
     return R.GetQuaternion()
 
-def set_arm_position(msg):
-    global end_effector
-    if type(base) is np.ndarray:
+def set_arm_position_right(msg):
+    global end_effector_right
+    if type(base_right) is np.ndarray:
         base_to_end_effector = matrix_from_transform(msg)
-        end_effector = np.matmul(base, base_to_end_effector)
+        end_effector_right = np.matmul(base_right, base_to_end_effector)
+
+def set_arm_position_left(msg):
+    global end_effector_left
+    if type(base_left) is np.ndarray:
+        base_to_end_effector = matrix_from_transform(msg)
+        end_effector_left = np.matmul(base_left, base_to_end_effector)
 
 def find_error(current,desired):
     currentTranslation = current[0:3,3]
@@ -96,81 +107,135 @@ def release_right():
     servo_jaw_right_pub.publish(temp)
     time.sleep(10) # TODO
 
+def grab_left():
+    temp = JointState()
+    temp.position = [0.0]
+    servo_jaw_left_pub.publish(temp)
+    time.sleep(10) # TODO
+
+def release_left():
+    temp = JointState()
+    temp.position = [0.5]
+    servo_jaw_left_pub.publish(temp)
+    time.sleep(10) # TODO
+
 def grab_needle_right():
-    rate = rospy.Rate(0.1)
+    path = get_paths_right.grab_needle_right()
+    rate = rospy.Rate(1)
     i = 0
     while not rospy.is_shutdown():
-        path = get_paths_right.grab_needle_right()
-
-        if path != None and end_effector is not None:
+        if path != None and end_effector_right is not None:
             if i < len(path):
-                (position_error,rotation_error) = find_error(end_effector,path[i])
+                (position_error,rotation_error) = find_error(end_effector_right,path[i])
             while i < len(path) and position_error < 0.05 and rotation_error < 0.05:
                 i = i + 1
-                if i < len(path):
-                    (position_error,rotation_error) = find_error(end_effector,path[i])
-            if i < len(path):
+                path = get_paths_right.grab_needle_right()
+                if path != None and i < len(path):
+                    (position_error,rotation_error) = find_error(end_effector_right,path[i])
+            if path != None and i < len(path):
                 servo_cp_right_pub.publish(np_mat_to_transform(path[i]))
             else:
                 grab_right()
+                release_left()
                 return True
+        else:
+            path = get_paths_right.grab_needle_right()
+            print('No path right now')
+        rate.sleep()
+
+def grab_needle_left():
+    path = get_paths_left.grab_needle_left()
+    rate = rospy.Rate(1)
+    i = 0
+    while not rospy.is_shutdown():
+        if path != None and end_effector_left is not None:
+            if i < len(path):
+                (position_error,rotation_error) = find_error(end_effector_left,path[i])
+            while i < len(path) and position_error < 0.05 and rotation_error < 0.05:
+                i = i + 1
+                path = get_paths_left.grab_needle_left()
+                if path != None and i < len(path):
+                    (position_error,rotation_error) = find_error(end_effector_left,path[i])
+            if path != None and i < len(path):
+                servo_cp_left_pub.publish(np_mat_to_transform(path[i]))
+            else:
+                grab_left()
+                release_right()
+                return True
+        else:
+            path = get_paths_left.grab_needle_left()
+            print('No path right now')
         rate.sleep()
 
 def nav_entry(index):
-    rate = rospy.Rate(0.08)
+    path = get_paths_right.entry_path(index)
+    rate = rospy.Rate(1)
     i = 0
     while not rospy.is_shutdown():
-        path = get_paths_right.entry_path(index)
-
-        if path != None and end_effector is not None:
+        if path != None and end_effector_right is not None:
             if i < len(path):
-                (position_error,rotation_error) = find_error(end_effector,path[i])
+                (position_error,rotation_error) = find_error(end_effector_right,path[i])
             while i < len(path) and position_error < 0.05 and rotation_error < 0.05:
+                path = get_paths_right.entry_path(index)
                 i = i + 1
-                if i < len(path):
-                    (position_error,rotation_error) = find_error(end_effector,path[i])
-            if i < len(path):
+                if path != None and i < len(path):
+                    (position_error,rotation_error) = find_error(end_effector_right,path[i])
+            if path != None and i < len(path):
                 servo_cp_right_pub.publish(np_mat_to_transform(path[i]))
             else:
                 return True
+        else:
+            path = get_paths_right.entry_path(index)
+            print('No path right now')
         rate.sleep()
 
 def nav_exit(index):
-    rate = rospy.Rate(0.08)
+    path = get_paths_right.exit_path(index)
+    rate = rospy.Rate(1)
     i = 0
     while not rospy.is_shutdown():
-        path = get_paths_right.exit_path(index)
-
-        if path != None and end_effector is not None:
+        if path != None and end_effector_right is not None:
             if i < len(path):
-                (position_error,rotation_error) = find_error(end_effector,path[i])
+                (position_error,rotation_error) = find_error(end_effector_right,path[i])
             while i < len(path) and position_error < 0.05 and rotation_error < 0.05:
                 i = i + 1
-                if i < len(path):
-                    (position_error,rotation_error) = find_error(end_effector,path[i])
-            if i < len(path):
+                path = get_paths_right.exit_path(index)
+                if path != None and i < len(path):
+                    (position_error,rotation_error) = find_error(end_effector_right,path[i])
+            print(i)
+            if path != None and i < len(path):
                 servo_cp_right_pub.publish(np_mat_to_transform(path[i]))
             else:
                 return True
+        else:
+            path = get_paths_right.exit_path(index)
+            print('No path right now')
         rate.sleep()
 
 needle = None
 rospy.Subscriber('/CRTK/Needle/measured_cp', TransformStamped, set_needle_position, queue_size=1)
 
-base = None
-rospy.Subscriber('/CRTK/' + 'psm2' + '/T_b_t_w', TransformStamped, set_base_position, queue_size=1)
-
-end_effector = None
-rospy.Subscriber('/CRTK/' + 'psm2' + '/measured_cp', TransformStamped, set_arm_position, queue_size=1)
-# rospy.Subscriber('/CRTK/' + 'psm2' + '/measured_jp', JointState, set_arm_joints, queue_size=1)
-
+base_right = None
+rospy.Subscriber('/CRTK/' + 'psm2' + '/T_b_t_w', TransformStamped, set_base_position_right, queue_size=1)
+end_effector_right = None
+rospy.Subscriber('/CRTK/' + 'psm2' + '/measured_cp', TransformStamped, set_arm_position_right, queue_size=1)
 servo_cp_right_pub = rospy.Publisher('/CRTK/psm2/servo_cp', TransformStamped, queue_size=1)
-# servo_jp_right_pub = rospy.Publisher('/CRTK/psm2/servo_jp', JointState, queue_size=1)
 servo_jaw_right_pub = rospy.Publisher('/CRTK/psm2/jaw/servo_jp', JointState, queue_size=1)
+
+base_left = None
+rospy.Subscriber('/CRTK/' + 'psm1' + '/T_b_t_w', TransformStamped, set_base_position_left, queue_size=1)
+end_effector_left = None
+rospy.Subscriber('/CRTK/' + 'psm1' + '/measured_cp', TransformStamped, set_arm_position_left, queue_size=1)
+servo_cp_left_pub = rospy.Publisher('/CRTK/psm1/servo_cp', TransformStamped, queue_size=1)
+servo_jaw_left_pub = rospy.Publisher('/CRTK/psm1/jaw/servo_jp', JointState, queue_size=1)
 
 print('starting needle grab')
 grab_needle_right()
+time.sleep(1)
 print('starting nav entry')
 nav_entry(0)
+time.sleep(1)
 print('starting nav exit')
 nav_exit(0)
+print('starting needle grab')
+grab_needle_left()
