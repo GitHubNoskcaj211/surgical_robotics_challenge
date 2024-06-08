@@ -1,4 +1,4 @@
-# HELLO!
+# Our Suturing Solution
 If you are here to run the code and grade the project here is our commands to run everything (run each in a different terminal):
 
 Terminal 1: Initialize ROS
@@ -32,8 +32,10 @@ The files changed for functionality of the final design were (all in scripts/sur
 - launch_crtk_interface.py
 - psm_arm.py
 
+# Example Video of our Solution
+[YouTube](https://youtu.be/nVEVapagoo8)
 
-# Surgical Robotics Challenge
+# Background on Surgical Robotics Challenge
 For more information regarding the challenge, please visit https://collaborative-robotics.github.io/surgical-robotics-challenge/challenge-2021.html
 
 # [Discussions Forum](https://github.com/collaborative-robotics/surgical_robotics_challenge/discussions)
